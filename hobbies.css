@@ -1,0 +1,104 @@
+/* Main background and styling */
+body {
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #fdfbfb, #ebedee);
+  color: #2c3e50;
+}
+
+/* Header styling */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #ffffff, #f7f9fc);
+  padding: 15px 25px;
+  border-bottom: 1px solid #dfe6e9;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+header a {
+  text-decoration: none;
+  color: #1e90ff;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+header a:hover {
+  color: #0d6efd;
+}
+
+/* Gallery styling */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  margin: 40px 0;
+  justify-content: center;
+}
+
+.gallery img {
+  max-width: 260px;
+  height: auto;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gallery img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Video section */
+.video-section {
+  margin: 50px 0;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Tableau section */
+.tableau-section {
+  margin: 50px 0;
+  background: linear-gradient(135deg, #e3f2fd, #f1f9ff);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* List section */
+.list-section {
+  margin: 30px 0;
+  background: #fdfdfd;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Back to top link */
+.top-link {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background: linear-gradient(135deg, #1e90ff, #0d6efd);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.top-link:hover {
+  background: linear-gradient(135deg, #0d6efd, #004080);
+  transform: translateY(-3px);
+}

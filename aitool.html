@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Endless Platformer</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(to top, #a0e9ff, #f9f9ff);
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      display: flex;
+    }
+    header {
+      background: #ffb6c1;
+      padding: 10px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      position: relative;
+      width: 100%;
+    }
+    #backBtn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: #66d17a;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #gameArea {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      background: #d0f0c0;
+      border: 4px solid #ffb6c1;
+      border-radius: 12px;
+    }
+    #restartBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 20px;
+      background: #ffb6c1;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+    }
+    #sidebar {
+      flex: 1;
+      background: #fff0f5;
+      padding: 20px;
+      border-left: 3px solid #ffb6c1;
+    }
+    #sidebar h2 {
+      margin-top: 0;
+      color: #ff69b4;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameArea">
+    <header>
+      This entire page was made using AI, please enjoy
+      <button id="backBtn" onclick="location.href='index.html'">Back to Index</button>
+    </header>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <button id="restartBtn">Restart</button>
+  </div>
+  <div id="sidebar">
+    <h2>How to Play</h2>
+    <p>Move your mouse left and right to guide the pink ball.</p>
+    <p>Bounce on platforms to keep climbing and earn points.</p>
+    <p>Beware! Part of the challenge is that you can only see what is right above you, so you must be quick!</p>
+    <p>Avoid obstacles — hitting them ends the game.</p>
+    <p>Collect little food items for bonus points.</p>
+    <p>If you fall to the bottom of the screen, you lose.</p>
+    <p>Try to get the highest score possible!</p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const restartBtn = document.getElementById("restartBtn");
+    const PLATFORM_GAP = 60;
+    const MIN_GAP = 50;
+    const MAX_GAP = 70;
+
+    function nextGap(){
+      return MIN_GAP + Math.random() * (MAX_GAP - MIN_GAP);
+    }
+
+    let player, gravity, platforms, obstacles, foods, score, gameOver, cameraY;
+let bottomObstacle;
+let lastObstacleY = -200; // track last spawn globally
+let lastPlatformY;
+
+function initGame() {
+  player = { x: 200, y: 200, width: 30, height: 30, vy: 0 };
+  gravity = 0.5;
+  platforms = [];
+  obstacles = [];
+  foods = [];
+  score = 0;
+  gameOver = false;
+  cameraY = 0;
+  bottomObstacle = { x: 0, y: canvas.height - 20, width: canvas.width, height: 20 };
+
+  // Platform directly under the player
+  const platformWidth = 100;
+  const platformX = player.x - platformWidth/2 + player.width/2;
+  const platformY = player.y + player.height + 10;
+  platforms.push({ x: platformX, y: platformY, width: platformWidth, height: 12 });
+  lastPlatformY = platformY;
+
+  // Spawn additional platforms ABOVE the player
+  for (let i = 0; i < 7; i++) {
+    createPlatform(lastPlatformY - nextGap());
+  }
+}
+
+function createPlatform(y) {
+  const width = 80;
+  const x = Math.random() * (canvas.width - width);
+  const platform = { x, y, width, height: 10 };
+  platforms.push(platform);
+  lastPlatformY = y;
+
+  // Only spawn obstacles if this platform is not the only reachable one
+  const safeZone = (platforms.length < 3); // first few platforms are safe
+  if (!safeZone && Math.random() < 0.25) {
+    createObstacle(y - 40, x, width);
+  }
+  if (Math.random() < 0.15) {
+    createFood(y - 60);
+  }
+}
+function createObstacle(y) {
+  if (y < lastObstacleY - 150 || lastObstacleY === -200) {
+    const width = 60, height = 30;
+    const x = Math.random() * (canvas.width - width);
+    obstacles.push({ x, y, width, height });
+    lastObstacleY = y;
+  }
+}
+
+function createFood(y) {
+  const size = 15;
+  const x = Math.random() * (canvas.width - size);
+  foods.push({ x, y, size });
+}
+    function drawPlayer() {
+      ctx.fillStyle = "#ff69b4";
+      ctx.beginPath();
+      ctx.arc(player.x + player.width/2, player.y + player.height/2 - cameraY, player.width/2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(player.x+10, player.y+10 - cameraY, 5, 0, Math.PI*2);
+      ctx.arc(player.x+20, player.y+10 - cameraY, 5, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    function drawPlatforms() {
+      ctx.fillStyle = "#87ceeb";
+      platforms.forEach(p => ctx.fillRect(p.x, p.y - cameraY, p.width, p.height));
+    }
+
+    function drawObstacles() {
+      ctx.fillStyle = "#ff0000";
+      obstacles.forEach(o => ctx.fillRect(o.x, o.y - cameraY, o.width, o.height));
+      // Draw it in drawObstacles()
+      ctx.fillStyle = "#8b0000"; // dark red hazard
+      ctx.fillRect(bottomObstacle.x, bottomObstacle.y - cameraY, bottomObstacle.width, bottomObstacle.height);
+    }
+
+    function drawFoods() {
+      ctx.fillStyle = "#ffa500";
+      foods.forEach(f => {
+        ctx.beginPath();
+        ctx.arc(f.x+f.size/2, f.y+f.size/2 - cameraY, f.size/2, 0, Math.PI*2);
+        ctx.fill();
+      });
+    }
+
+    function update() 
+    {
+      if (gameOver) return;
+
+      // Collision check in update()
+      if (player.x < bottomObstacle.x + bottomObstacle.width &&
+         player.x + player.width > bottomObstacle.x &&
+         player.y < bottomObstacle.y + bottomObstacle.height &&
+         player.y + player.height > bottomObstacle.y) {
+        gameOver = true;
+}
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+player.vy += gravity;
+player.y += player.vy;
+
+// Camera follows player
+cameraY = player.y - 300;
+
+// Remove anything far below the camera
+const cullY = cameraY + canvas.height + 80;
+platforms = platforms.filter(p => p.y < cullY);
+obstacles = obstacles.filter(o => o.y < cullY);
+foods    = foods.filter(f => f.y < cullY);
+
+// Consistent spawn: always above the last platform
+while (platforms.length < 8) {
+  createPlatform(lastPlatformY - nextGap());
+}
+
+
+      platforms.forEach(p => {
+        if (player.vy > 0 &&
+          player.y + player.height <= p.y + p.height &&
+          player.y + player.height >= p.y &&
+          player.x + player.width > p.x &&
+          player.x < p.x + p.width) {
+        player.vy = -10;
+        score++;
+}
+      });
+
+      obstacles.forEach(o => {
+        if (player.x < o.x + o.width &&
+            player.x + player.width > o.x &&
+            player.y < o.y + o.height &&
+            player.y + player.height > o.y) {
+          gameOver = true;
+        }
+      });
+
+      foods.forEach((f, index) => {
+        if (player.x < f.x + f.size &&
+            player.x + player.width > f.x &&
+            player.y < f.y + f.size &&
+            player.y + player.height > f.y) {
+          score += 5;
+          foods.splice(index,1);
+        }
+      });
+
+      if (player.y > cameraY + canvas.height) {
+      gameOver = true;
+      }
+
+      drawPlayer();
+      drawPlatforms();
+      drawObstacles();
+      drawFoods();
+
+      ctx.fillStyle = "#000";
+      ctx.font = "20px Comic Sans MS";
+      ctx.fillText("Score: " + score, 10, 30);
+
+      if (gameOver) {
+        ctx.fillStyle = "#000";
+        ctx.font = "30px Comic Sans MS";
+        ctx.fillText("Game Over!", 120, 300);
+        ctx.fillText("Final Score: " + score, 100, 340);
+        restartBtn.style.display = "block";
+      } else {
+        requestAnimationFrame(update);
+      }
+    }
+
+    canvas.addEventListener("mousemove", e => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      player.x = mouseX - player.width/2;
+    });
+
+    // Start button
+    const startBtn = document.createElement("button");
+    startBtn.innerText = "Start Game";
+    startBtn.style.position = "absolute";
+    startBtn.style.top = "50%";
+    startBtn.style.left = "50%";
+    startBtn.style.transform = "translate(-50%, -50%)";
+    startBtn.style.padding = "10px 20px";
+    startBtn.style.fontSize = "20px";
+    document.getElementById("gameArea").appendChild(startBtn);
+
+
+    startBtn.addEventListener("click", () => {
+    startBtn.remove();
+    initGame();
+    update();
+    });
+
+    restartBtn.addEventListener("click", () => {
+     restartBtn.style.display = "none";
+    initGame();
+    update();
+    });
+
+</script>
+</body>
+</html>
